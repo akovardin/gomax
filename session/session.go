@@ -68,31 +68,6 @@ func (s *Store) initializeDB(db *sql.DB) error {
 	return err
 }
 
-func (s *Store) ensureColumn(db *sql.DB, name string, definition string) error {
-	rows, err := db.Query("PRAGMA table_info(sessions)")
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var cid int
-		var cname string
-		var ctype string
-		var notnull int
-		var dfltValue sql.NullString
-		var pk int
-		if err := rows.Scan(&cid, &cname, &ctype, &notnull, &dfltValue, &pk); err != nil {
-			return err
-		}
-		if cname == name {
-			return nil
-		}
-	}
-	_, err = db.Exec("ALTER TABLE sessions ADD COLUMN " + name + " " + definition)
-	return err
-}
-
 func (s *Store) SaveSession(info *SessionInfo) error {
 	if err := s.getConnection(); err != nil {
 		return err
