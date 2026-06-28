@@ -12,7 +12,7 @@ func main() {
 	extraConfig.LogLevel = "debug"
 
 	client := gomax.NewClient(
-		"+79818463973",      // phone
+		"+79819379992",      // phone
 		"session-mobile.db", // sessionName
 		".",                 // workDir
 		extraConfig,         // extraConfig
