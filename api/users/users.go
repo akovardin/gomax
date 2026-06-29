@@ -16,35 +16,31 @@ func NewService(app core.AppInterface) *Service {
 
 func (s *Service) GetUsers(userIDs []int) ([]*types.User, error) {
 	payload := map[string]interface{}{
-		"userIds": userIDs,
+		"contactIds": userIDs,
 	}
 	frame, err := core.InvokeAPI(s.app, int(protocol.OpcodeContactInfo), payload)
 	if err != nil {
 		return nil, err
 	}
-	if usersRaw, ok := frame.Payload["users"]; ok {
+	if usersRaw, ok := frame.Payload["contacts"]; ok {
 		users, err := core.ConvertStruct[[]*types.User](usersRaw)
 		if err != nil {
 			return nil, err
 		}
 		return *users, nil
 	}
-	users, err := core.ConvertStruct[[]*types.User](frame.Payload)
-	if err != nil {
-		return nil, err
-	}
-	return *users, nil
+	return nil, nil
 }
 
 func (s *Service) GetUser(userID int) (*types.User, error) {
 	payload := map[string]interface{}{
-		"userIds": []int{userID},
+		"contactIds": []int{userID},
 	}
 	frame, err := core.InvokeAPI(s.app, int(protocol.OpcodeContactInfo), payload)
 	if err != nil {
 		return nil, err
 	}
-	if usersRaw, ok := frame.Payload["users"]; ok {
+	if usersRaw, ok := frame.Payload["contacts"]; ok {
 		users, err := core.ConvertStruct[[]*types.User](usersRaw)
 		if err != nil {
 			return nil, err
@@ -71,6 +67,9 @@ func (s *Service) SearchByPhone(phone string) (*types.User, error) {
 	frame, err := core.InvokeAPI(s.app, int(protocol.OpcodeContactInfoByPhone), payload)
 	if err != nil {
 		return nil, err
+	}
+	if contactRaw, ok := frame.Payload["contact"]; ok {
+		return core.ConvertStruct[types.User](contactRaw)
 	}
 	return core.RequirePayloadModel[types.User](frame.Payload)
 }
@@ -100,18 +99,14 @@ func (s *Service) ImportContacts(contacts []types.ContactInfo) ([]*types.User, e
 	if err != nil {
 		return nil, err
 	}
-	if usersRaw, ok := frame.Payload["users"]; ok {
+	if usersRaw, ok := frame.Payload["contacts"]; ok {
 		users, err := core.ConvertStruct[[]*types.User](usersRaw)
 		if err != nil {
 			return nil, err
 		}
 		return *users, nil
 	}
-	users, err := core.ConvertStruct[[]*types.User](frame.Payload)
-	if err != nil {
-		return nil, err
-	}
-	return *users, nil
+	return nil, nil
 }
 
 func (s *Service) GetSessions() ([]*types.Session, error) {

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/akovardin/gomax/api/core"
+	"github.com/akovardin/gomax/logging"
 	"github.com/akovardin/gomax/protocol"
 	"github.com/akovardin/gomax/types"
 )
@@ -24,7 +25,7 @@ func (s *Service) resolveSyncState() types.SyncState {
 }
 
 func (s *Service) RequestCode(phone string) (*types.StartAuthResponse, error) {
-	core.LogDebug("requestCode phone=%s", phone)
+	logging.LogDebug("requestCode phone=%s", phone)
 	payload := map[string]interface{}{
 		"phone":    phone,
 		"type":     "START_AUTH",
@@ -42,11 +43,11 @@ func (s *Service) SendCode(token string, code string) (*types.CheckCodeResponse,
 	if len(token) > 8 {
 		tokenPrefix = token[:8]
 	}
-	core.LogDebug("sendCode token=%s...", tokenPrefix)
+	logging.LogDebug("sendCode token=%s...", tokenPrefix)
 	payload := map[string]interface{}{
-		"token":          token,
-		"verifyCode":     code,
-		"authTokenType":  "CHECK_CODE",
+		"token":         token,
+		"verifyCode":    code,
+		"authTokenType": "CHECK_CODE",
 	}
 	frame, err := core.InvokeAPI(s.app, int(protocol.OpcodeAuth), payload)
 	if err != nil {
@@ -68,7 +69,7 @@ func (s *Service) CheckPassword(trackID string, password string) (*types.CheckPa
 }
 
 func (s *Service) Login(userAgent *types.MobileUserAgentPayload) (*types.LoginResponse, error) {
-	core.LogDebug("login deviceType=%s", userAgent.DeviceType)
+	logging.LogDebug("login deviceType=%s", userAgent.DeviceType)
 	if userAgent != nil && userAgent.DeviceType == string(types.DeviceTypeWeb) {
 		return s.WebLogin()
 	}
@@ -121,7 +122,7 @@ func (s *Service) WebLogin() (*types.LoginResponse, error) {
 }
 
 func (s *Service) RequestQr() (*types.RequestQrResponse, error) {
-	core.LogDebug("requestQr")
+	logging.LogDebug("requestQr")
 	payload := map[string]interface{}{}
 	frame, err := core.InvokeAPI(s.app, int(protocol.OpcodeGetQR), payload)
 	if err != nil {
@@ -131,7 +132,7 @@ func (s *Service) RequestQr() (*types.RequestQrResponse, error) {
 }
 
 func (s *Service) CheckQr(trackID string) (*types.CheckQrResponse, error) {
-	core.LogDebug("checkQr trackId=%s", trackID)
+	logging.LogDebug("checkQr trackId=%s", trackID)
 	payload := map[string]interface{}{
 		"trackId": trackID,
 	}
@@ -143,7 +144,7 @@ func (s *Service) CheckQr(trackID string) (*types.CheckQrResponse, error) {
 }
 
 func (s *Service) ConfirmQr(trackID string) (*types.CheckCodeResponse, error) {
-	core.LogDebug("confirmQr trackId=%s", trackID)
+	logging.LogDebug("confirmQr trackId=%s", trackID)
 	payload := map[string]interface{}{
 		"trackId": trackID,
 	}

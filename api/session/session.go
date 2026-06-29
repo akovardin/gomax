@@ -2,6 +2,7 @@ package session
 
 import (
 	"github.com/akovardin/gomax/api/core"
+	"github.com/akovardin/gomax/logging"
 	"github.com/akovardin/gomax/protocol"
 	"github.com/akovardin/gomax/types"
 )
@@ -22,7 +23,7 @@ func (s *Service) Handshake(mtInstanceID string, userAgent *types.MobileUserAgen
 }
 
 func (s *Service) mobileHandshake(mtInstanceID string, userAgent *types.MobileUserAgentPayload, deviceID string) error {
-	core.LogDebug("handshake deviceId=%s deviceType=%s", deviceID, userAgent.DeviceType)
+	logging.LogDebug("handshake deviceId=%s deviceType=%s", deviceID, userAgent.DeviceType)
 	payload := map[string]interface{}{
 		"deviceId":     deviceID,
 		"mtInstanceId": mtInstanceID,
@@ -35,7 +36,7 @@ func (s *Service) mobileHandshake(mtInstanceID string, userAgent *types.MobileUs
 }
 
 func (s *Service) webHandshake(userAgent *types.MobileUserAgentPayload, deviceID string) error {
-	core.LogDebug("handshake deviceId=%s deviceType=%s", deviceID, userAgent.DeviceType)
+	logging.LogDebug("handshake deviceId=%s deviceType=%s", deviceID, userAgent.DeviceType)
 	payload := map[string]interface{}{
 		"deviceId": deviceID,
 	}

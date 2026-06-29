@@ -2,6 +2,7 @@ package chats
 
 import (
 	"strings"
+	"time"
 
 	"github.com/akovardin/gomax/api/core"
 	"github.com/akovardin/gomax/protocol"
@@ -213,9 +214,11 @@ func (s *Service) DeleteChat(chatID int) error {
 }
 
 func (s *Service) FetchChats(marker interface{}) ([]*types.Chat, error) {
-	payload := map[string]interface{}{}
-	if marker != nil {
-		payload["marker"] = marker
+	if marker == nil {
+		marker = int(time.Now().UnixMilli())
+	}
+	payload := map[string]interface{}{
+		"marker": marker,
 	}
 	frame, err := core.InvokeAPI(s.app, int(protocol.OpcodeChatsList), payload)
 	if err != nil {
