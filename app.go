@@ -7,11 +7,11 @@ import (
 
 	"github.com/akovardin/gomax/api"
 	apiauth "github.com/akovardin/gomax/api/auth"
-	"github.com/akovardin/gomax/api/core"
 	apisession "github.com/akovardin/gomax/api/session"
 	gomaxauth "github.com/akovardin/gomax/auth"
 	"github.com/akovardin/gomax/connection"
 	"github.com/akovardin/gomax/dispatch"
+	"github.com/akovardin/gomax/logging"
 	"github.com/akovardin/gomax/protocol"
 	"github.com/akovardin/gomax/session"
 	"github.com/akovardin/gomax/types"
@@ -68,7 +68,7 @@ func NewApp(
 }
 
 func (a *App) Invoke(opcode int, payload map[string]interface{}, cmd int, timeout float64, compress bool) (*protocol.InboundFrame, error) {
-	core.LogDebug("invoke opcode=%d cmd=%d timeout=%.0f payload_keys=%v", opcode, cmd, timeout, payloadKeys(payload))
+	logging.LogDebug("invoke opcode=%d cmd=%d timeout=%.0f payload_keys=%v", opcode, cmd, timeout, payloadKeys(payload))
 	frame := &protocol.OutboundFrame{
 		Ver:     a.conn.Version(),
 		Opcode:  opcode,
@@ -81,7 +81,7 @@ func (a *App) Invoke(opcode int, payload map[string]interface{}, cmd int, timeou
 	if err != nil {
 		return nil, err
 	}
-	core.LogDebug("response opcode=%d cmd=%d seq=%v", response.Opcode, response.Cmd, response.Seq)
+	logging.LogDebug("response opcode=%d cmd=%d seq=%v", response.Opcode, response.Cmd, response.Seq)
 	return response, nil
 }
 
@@ -183,7 +183,7 @@ func (a *App) Start() error {
 
 	sessionData, err := a.store.LoadSession()
 	if err != nil {
-		core.LogWarn("failed to load session: %v", err)
+		logging.LogWarn("failed to load session: %v", err)
 	}
 
 	if sessionData != nil && sessionData.MtInstanceID != "" {
@@ -192,7 +192,7 @@ func (a *App) Start() error {
 		sessionData.MtInstanceID = a.config.Device.MtInstanceID
 	}
 
-	core.LogDebug("opening connection to %s:%d", a.config.Host, a.config.Port)
+	logging.LogDebug("opening connection to %s:%d", a.config.Host, a.config.Port)
 	if err := a.conn.Open(); err != nil {
 		a.store.Close()
 		return fmt.Errorf("failed to connect: %w", err)
@@ -202,7 +202,7 @@ func (a *App) Start() error {
 	if sessionData != nil {
 		handshakeDeviceID = sessionData.DeviceID
 	}
-	core.LogDebug("handshake deviceId=%s", handshakeDeviceID)
+	logging.LogDebug("handshake deviceId=%s", handshakeDeviceID)
 
 	sessionSvc := apisession.NewService(a)
 	if err := sessionSvc.Handshake(
@@ -215,13 +215,13 @@ func (a *App) Start() error {
 		return fmt.Errorf("handshake failed: %w", err)
 	}
 
-	core.LogDebug("handshake completed")
+	logging.LogDebug("handshake completed")
 
 	go a.pingLoop()
 
 	if sessionData == nil {
 		if a.config.Token != "" {
-			core.LogDebug("no saved session, using config token")
+			logging.LogDebug("no saved session, using config token")
 			sessionData = &session.SessionInfo{
 				Token:        a.config.Token,
 				DeviceID:     a.config.Device.DeviceID,
@@ -230,10 +230,10 @@ func (a *App) Start() error {
 				Sync:         types.DefaultSyncState(),
 			}
 			if err := a.store.SaveSession(sessionData); err != nil {
-				core.LogError("failed to save session: %v", err)
+				logging.LogError("failed to save session: %v", err)
 			}
 		} else {
-			core.LogDebug("no saved session, starting authentication")
+			logging.LogDebug("no saved session, starting authentication")
 			result, err := a.authFlow.Authenticate(a)
 			if err != nil {
 				a.conn.Close()
@@ -255,15 +255,15 @@ func (a *App) Start() error {
 				Sync:         types.DefaultSyncState(),
 			}
 			if err := a.store.SaveSession(sessionData); err != nil {
-				core.LogError("failed to save session: %v", err)
+				logging.LogError("failed to save session: %v", err)
 			}
 		}
 	} else {
-		core.LogDebug("loaded saved session deviceId=%s phone=%s", sessionData.DeviceID, sessionData.Phone)
+		logging.LogDebug("loaded saved session deviceId=%s phone=%s", sessionData.DeviceID, sessionData.Phone)
 	}
 
 	a.session = sessionData
-	core.LogDebug("logging in with token=%s...", sessionData.Token[:min(8, len(sessionData.Token))])
+	logging.LogDebug("logging in with token=%s...", sessionData.Token[:min(8, len(sessionData.Token))])
 
 	authSvc := apiauth.NewService(a)
 	response, err := authSvc.Login(a.config.Device.UserAgent)
@@ -278,7 +278,7 @@ func (a *App) Start() error {
 		a.UpdateToken(a.session.Token, *response.Token)
 		tokenRotated = true
 	}
-	core.LogDebug("login response: token_rotated=%v chats=%d", tokenRotated, len(response.Chats))
+	logging.LogDebug("login response: token_rotated=%v chats=%d", tokenRotated, len(response.Chats))
 
 	a.me = response.Profile
 	a.chats = response.Chats
@@ -296,7 +296,7 @@ func (a *App) Start() error {
 	a.started = true
 	a.mu.Unlock()
 
-	core.LogInfo("client started profile=%d chats=%d", a.me.Contact.ID, len(a.chats))
+	logging.LogInfo("client started profile=%d chats=%d", a.me.Contact.ID, len(a.chats))
 
 	a.dispatcher.OnInternal(dispatch.EventTypeVideoReady)(func(event interface{}, client interface{}) error {
 		if sig, ok := event.(*types.VideoUploadSignal); ok {
@@ -372,7 +372,7 @@ func (a *App) onConnectionLost(err error) {
 	a.mu.Unlock()
 
 	if err != nil {
-		core.LogWarn("connection lost: %v", err)
+		logging.LogWarn("connection lost: %v", err)
 	}
 }
 
@@ -412,7 +412,7 @@ func payloadKeys(payload map[string]interface{}) []string {
 func createStore(workDir string, dbName string) *session.Store {
 	store, err := session.NewStore(workDir, dbName)
 	if err != nil {
-		core.LogWarn("failed to create store: %v", err)
+		logging.LogWarn("failed to create store: %v", err)
 		return nil
 	}
 	return store

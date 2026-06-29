@@ -6,6 +6,7 @@ import (
 
 	apiauth "github.com/akovardin/gomax/api/auth"
 	"github.com/akovardin/gomax/api/core"
+	"github.com/akovardin/gomax/logging"
 	"github.com/akovardin/gomax/types"
 )
 
@@ -31,7 +32,7 @@ func (f *QrAuthFlow) Authenticate(app core.AppInterface) (*AuthResult, error) {
 
 	interval := float64(qrInfo.PollingInterval)
 	expiresAt := float64(qrInfo.ExpiresAt)
-	core.LogDebug("pollQR trackId=%s interval=%.1fs expiresIn=%ds", qrInfo.TrackID, interval/1000.0, int64(expiresAt/1000))
+	logging.LogDebug("pollQR trackId=%s interval=%.1fs expiresIn=%ds", qrInfo.TrackID, interval/1000.0, int64(expiresAt/1000))
 
 	if err := f.QRHandler.ShowQR(qrInfo.QRLink); err != nil {
 		return nil, err
@@ -75,7 +76,8 @@ func (f *QrAuthFlow) pollQR(app core.AppInterface, qrInfo *types.RequestQrRespon
 		}
 
 		if response.Status.LoginAvailable {
-			core.LogDebug("qr confirmed")
+			logging.LogDebug("qr confirmed")
+
 			return true, nil
 		}
 
@@ -111,7 +113,7 @@ func (f *QrAuthFlow) authenticateWithPassword(app core.AppInterface, trackID str
 		}
 
 		if lt := response.LoginToken(); lt != nil {
-		return *lt, nil
-	}
+			return *lt, nil
+		}
 	}
 }

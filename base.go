@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/akovardin/gomax/api"
-	"github.com/akovardin/gomax/api/core"
 	"github.com/akovardin/gomax/auth"
 	"github.com/akovardin/gomax/connection"
 	"github.com/akovardin/gomax/dispatch"
+	"github.com/akovardin/gomax/logging"
 	"github.com/akovardin/gomax/types"
 )
 
@@ -115,7 +115,7 @@ func (c *BaseClient) ResetRuntime() {
 }
 
 func (c *BaseClient) Start() error {
-	core.SetLogLevel(c.config.LogLevel)
+	logging.SetLogLevel(c.config.LogLevel)
 	for {
 		err := c.app.Start()
 		if err != nil {

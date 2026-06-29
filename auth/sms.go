@@ -5,6 +5,7 @@ import (
 
 	apiauth "github.com/akovardin/gomax/api/auth"
 	"github.com/akovardin/gomax/api/core"
+	"github.com/akovardin/gomax/logging"
 )
 
 type SmsAuthFlow struct {
@@ -26,42 +27,42 @@ func (f *SmsAuthFlow) Authenticate(app core.AppInterface) (*AuthResult, error) {
 		return nil, fmt.Errorf("phone is required for SMS authentication")
 	}
 
-	core.LogDebug("sms auth: requesting code for %s", phone)
+	logging.LogDebug("sms auth: requesting code for %s", phone)
 
 	authSvc := apiauth.NewService(app)
 
 	start, err := authSvc.RequestCode(phone)
 	if err != nil {
-		core.LogWarn("sms code error: %v", err)
+		logging.LogWarn("sms code error: %v", err)
 		return nil, err
 	}
 
-	core.LogDebug("sms auth: code received, sending...")
+	logging.LogDebug("sms auth: code received, sending...")
 
 	code, err := f.CodeProvider.GetCode(phone)
 	if err != nil {
-		core.LogWarn("sms get code error: %v", err)
+		logging.LogWarn("sms get code error: %v", err)
 		return nil, err
 	}
 
 	result, err := authSvc.SendCode(start.Token, code)
 	if err != nil {
-		core.LogWarn("sms send code error: %v", err)
+		logging.LogWarn("sms send code error: %v", err)
 		return nil, err
 	}
 
 	var token string
 	if lt := result.TokenAttrs.LoginToken(); lt != nil {
-		core.LogDebug("sms auth: got login token")
+		logging.LogDebug("sms auth: got login token")
 		token = *lt
 	} else if result.PasswordChallenge != nil {
-		core.LogDebug("sms auth: password challenge")
+		logging.LogDebug("sms auth: password challenge")
 		token, err = f.authenticateWithPassword(app, result.PasswordChallenge.TrackID, result.PasswordChallenge.Hint)
 		if err != nil {
 			return nil, err
 		}
 	} else if rt := result.TokenAttrs.RegisterToken(); rt != nil {
-		core.LogDebug("sms auth: registration required")
+		logging.LogDebug("sms auth: registration required")
 		registrationConfig := config.RegistrationConfig
 		if registrationConfig == nil {
 			return nil, fmt.Errorf("RegistrationConfig is required to register a new account")

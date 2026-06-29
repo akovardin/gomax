@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/akovardin/gomax/api/core"
 	"github.com/akovardin/gomax/connection/readers"
+	"github.com/akovardin/gomax/logging"
 	"github.com/akovardin/gomax/protocol"
 	"github.com/akovardin/gomax/transport"
 )
@@ -87,11 +87,14 @@ func (c *ConnectionManager) Send(frame *protocol.OutboundFrame) error {
 	if !c.isOpen {
 		return errors.New("connection not open")
 	}
+
 	data, err := c.proto.Encode(frame)
 	if err != nil {
 		return err
 	}
-	core.LogDebug("send frame opcode=%d cmd=%d seq=%d bytes=%d", frame.Opcode, frame.Cmd, frame.Seq, len(data))
+
+	logging.LogDebug("send frame opcode=%d cmd=%d seq=%d bytes=%d", frame.Opcode, frame.Cmd, frame.Seq, len(data))
+
 	return c.transport.Send(data)
 }
 
@@ -146,7 +149,7 @@ func (c *ConnectionManager) recvLoop() {
 
 		data, err := c.reader.Read()
 		if err != nil {
-			core.LogDebug("recv error: %v", err)
+			logging.LogDebug("recv error: %v", err)
 			c.handleRecvError(err)
 			return
 		}
@@ -162,7 +165,8 @@ func (c *ConnectionManager) recvLoop() {
 }
 
 func (c *ConnectionManager) handleInbound(frame *protocol.InboundFrame) {
-	core.LogDebug("recv frame opcode=%d cmd=%d seq=%v", frame.Opcode, frame.Cmd, frame.Seq)
+	logging.LogDebug("recv frame opcode=%d cmd=%d seq=%v", frame.Opcode, frame.Cmd, frame.Seq)
+
 	if frame.Cmd == int(protocol.CommandResponse) || frame.Cmd == int(protocol.CommandError) {
 		if frame.Seq != nil {
 			if c.requests.Resolve(*frame.Seq, frame) {
