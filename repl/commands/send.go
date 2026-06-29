@@ -21,7 +21,7 @@ func NewSend(client *gomax.WebClient) *Send {
 }
 
 func (s *Send) Help() string {
-	return ".send - Отправить сообщение себе"
+	return ".send - Отправить сообщение"
 }
 
 func (s *Send) Do(args []string) error {

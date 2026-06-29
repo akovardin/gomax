@@ -23,6 +23,8 @@ func (s *Messages) Help() string {
 }
 
 func (s *Messages) Do(args []string) error {
+	// выводить сообщения из чата если он указан
+
 	for _, m := range s.storage.List() {
 		fmt.Printf("%s | %s\n\n", m.ChatID.String(), m.Text)
 	}
