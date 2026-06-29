@@ -217,8 +217,6 @@ func (a *App) Start() error {
 
 	logging.LogDebug("handshake completed")
 
-	go a.pingLoop()
-
 	if sessionData == nil {
 		if a.config.Token != "" {
 			logging.LogDebug("no saved session, using config token")
@@ -295,6 +293,8 @@ func (a *App) Start() error {
 	a.mu.Lock()
 	a.started = true
 	a.mu.Unlock()
+
+	go a.pingLoop()
 
 	logging.LogInfo("client started profile=%d chats=%d", a.me.Contact.ID, len(a.chats))
 

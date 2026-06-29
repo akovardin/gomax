@@ -39,6 +39,7 @@ func NewWebClient(
 	client.SessionName = sessionName
 	client.WorkDir = workDir
 	client.ExtraConfig = extraConfig
+	client.BaseClient.self = client
 
 	userAgent := extraConfig.GenerateWebUserAgent()
 	client.config = client.BuildConfig("", userAgent)

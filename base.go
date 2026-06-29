@@ -24,6 +24,11 @@ type BaseClient struct {
 	authFlow   auth.AuthFlow
 	router     *dispatch.Router
 	buildConn  func() *connection.ConnectionManager
+	self       interface{}
+}
+
+func (c *BaseClient) Self() interface{} {
+	return c.self
 }
 
 func (c *BaseClient) Me() *types.Profile {
@@ -105,13 +110,13 @@ func (c *BaseClient) InitRuntime(authFlow auth.AuthFlow) {
 	c.connection = c.buildConn()
 	c.router = dispatch.NewRouter()
 	c.app = NewApp(c.connection, c.config, c.authFlow, c.router)
-	c.app.dispatcher.BindClient(c)
+	c.app.dispatcher.BindClient(c.self)
 }
 
 func (c *BaseClient) ResetRuntime() {
 	c.connection = c.buildConn()
 	c.app = NewApp(c.connection, c.config, c.authFlow, c.router)
-	c.app.dispatcher.BindClient(c)
+	c.app.dispatcher.BindClient(c.self)
 }
 
 func (c *BaseClient) Start() error {

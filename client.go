@@ -42,6 +42,7 @@ func NewClient(
 	client.SessionName = sessionName
 	client.WorkDir = workDir
 	client.ExtraConfig = extraConfig
+	client.BaseClient.self = client
 
 	userAgent := extraConfig.GenerateUserAgent()
 	client.config = client.BuildConfig(phone, userAgent)

@@ -71,8 +71,11 @@ func (c *MsgpackPayloadCodec) normalizeForMsgpack(v interface{}) interface{} {
 }
 
 func (c *MsgpackPayloadCodec) Decode(payloadBytes []byte) (interface{}, error) {
-	var result interface{}
-	err := msgpack.Unmarshal(payloadBytes, &result)
+	dec := msgpack.NewDecoder(bytes.NewReader(payloadBytes))
+	dec.SetMapDecoder(func(d *msgpack.Decoder) (interface{}, error) {
+		return d.DecodeUntypedMap()
+	})
+	result, err := dec.DecodeInterface()
 	if err != nil {
 		return nil, fmt.Errorf("msgpack decode: %w", err)
 	}
@@ -94,6 +97,10 @@ func NewTcpPayloadDecoder(zstdCompression *ZstdCompression) *TcpPayloadDecoder {
 }
 
 func (d *TcpPayloadDecoder) Decode(payloadBytes []byte, flags int) (map[string]interface{}, error) {
+	if len(payloadBytes) == 0 {
+		return map[string]interface{}{}, nil
+	}
+
 	var decompressed []byte
 	var err error
 
@@ -114,7 +121,16 @@ func (d *TcpPayloadDecoder) Decode(payloadBytes []byte, flags int) (map[string]i
 
 	decoded, err := d.Serializer.Decode(decompressed)
 	if err != nil {
-		return nil, fmt.Errorf("decode serialize: %w", err)
+		head := decompressed
+		if len(head) > 128 {
+			head = head[:128]
+		}
+		tail := decompressed
+		if len(tail) > 64 {
+			tail = tail[len(tail)-64:]
+		}
+		return nil, fmt.Errorf("decode serialize: %w (flags=%d comp=%d decomp=%d head=%x tail=%x)",
+			err, flags, len(payloadBytes), len(decompressed), head, tail)
 	}
 
 	normalized := normalizeKeys(decoded)
